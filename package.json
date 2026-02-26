@@ -1,0 +1,51 @@
+{
+  "name": "mcp-gmail-linkedin",
+  "version": "1.0.0",
+  "description": "A fused MCP server combining Gmail and LinkedIn functionality",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-gmail-linkedin": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/emailUtils.ts src/labelManager.ts src/filterManager.ts src/linkedinClient.ts --format esm --out-dir dist --clean",
+    "start": "node dist/index.js",
+    "auth": "node dist/index.js auth",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "gmail",
+    "linkedin",
+    "mcp",
+    "cursor",
+    "ai",
+    "model-context-protocol",
+    "claude"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "@types/mime-types": "^2.1.4",
+    "google-auth-library": "^9.4.1",
+    "googleapis": "^129.0.0",
+    "linkedin-private-api": "^1.1.2",
+    "mime-types": "^3.0.1",
+    "nodemailer": "^7.0.3",
+    "open": "^10.0.0",
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.22.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@types/nodemailer": "^6.4.17",
+    "tsup": "^8.5.1",
+    "typescript": "^5.3.3"
+  }
+}

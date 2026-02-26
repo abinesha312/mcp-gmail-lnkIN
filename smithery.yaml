@@ -1,0 +1,34 @@
+# Smithery config for mcp-gmail-linkedin: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - gcpOauthKeysPath
+      - credentialsPath
+    properties:
+      gcpOauthKeysPath:
+        type: string
+        description: Path to the GCP OAuth keys JSON file (Gmail)
+      credentialsPath:
+        type: string
+        description: Path to the stored Gmail OAuth credentials JSON file
+      linkedinEmail:
+        type: string
+        description: LinkedIn account email (optional, for getFeedPosts and searchJobs)
+      linkedinPassword:
+        type: string
+        description: LinkedIn account password (optional)
+  commandFunction:
+    |-
+    (config) => ({
+      command: 'node',
+      args: ['dist/index.js'],
+      env: {
+        GMAIL_OAUTH_PATH: config.gcpOauthKeysPath,
+        GMAIL_CREDENTIALS_PATH: config.credentialsPath,
+        ...(config.linkedinEmail && { LINKEDIN_EMAIL: config.linkedinEmail }),
+        ...(config.linkedinPassword && { LINKEDIN_PASSWORD: config.linkedinPassword })
+      }
+    })

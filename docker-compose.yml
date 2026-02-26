@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  mcp-gmail-linkedin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - mcp-gmail-linkedin-data:/mcp-data
+    environment:
+      - GMAIL_CREDENTIALS_PATH=/mcp-data/credentials.json
+      - GMAIL_OAUTH_PATH=/root/.gmail-mcp/gcp-oauth.keys.json
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+volumes:
+  mcp-gmail-linkedin-data:
