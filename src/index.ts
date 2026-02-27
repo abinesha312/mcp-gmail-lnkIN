@@ -26,9 +26,31 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const CONFIG_DIR = path.join(os.homedir(), '.gmail-mcp');
+const CONFIG_DIR = process.env.MCP_GMAIL_LINKEDIN_CONFIG_DIR || path.join(os.homedir(), '.gmail-mcp');
 const OAUTH_PATH = process.env.GMAIL_OAUTH_PATH || path.join(CONFIG_DIR, 'gcp-oauth.keys.json');
 const CREDENTIALS_PATH = process.env.GMAIL_CREDENTIALS_PATH || path.join(CONFIG_DIR, 'credentials.json');
+
+/** Path to optional file with LINKEDIN_EMAIL and LINKEDIN_PASSWORD (one per line, KEY=VALUE). Not needed if set via env. */
+const LINKEDIN_ENV_FILE = process.env.LINKEDIN_ENV_FILE || path.join(CONFIG_DIR, 'linkedin.env');
+
+function loadLinkedInEnvFile(): void {
+    if (process.env.LINKEDIN_EMAIL && process.env.LINKEDIN_PASSWORD) return;
+    try {
+        if (!fs.existsSync(LINKEDIN_ENV_FILE)) return;
+        const content = fs.readFileSync(LINKEDIN_ENV_FILE, 'utf8');
+        for (const line of content.split('\n')) {
+            const trimmed = line.replace(/#.*$/, '').trim();
+            const match = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/.exec(trimmed);
+            if (match) {
+                const key = match[1];
+                const value = match[2].replace(/^["']|["']$/g, '').trim();
+                if (key === 'LINKEDIN_EMAIL' || key === 'LINKEDIN_PASSWORD') process.env[key] = value;
+            }
+        }
+    } catch {
+        // ignore read errors
+    }
+}
 
 interface GmailMessagePart {
     partId?: string;
@@ -87,24 +109,37 @@ function extractEmailContent(messagePart: GmailMessagePart): EmailContent {
 
 async function loadCredentials() {
     try {
-        if (!process.env.GMAIL_OAUTH_PATH && !CREDENTIALS_PATH && !fs.existsSync(CONFIG_DIR)) {
-            fs.mkdirSync(CONFIG_DIR, { recursive: true });
+        // Support Doppler: Check for JSON strings in environment variables first
+        let keysContent: any;
+        let credentials: any;
+
+        // Try to load OAuth keys from environment variable (Doppler) or file
+        if (process.env.GMAIL_OAUTH_KEYS_JSON) {
+            // Doppler provides JSON as string
+            keysContent = JSON.parse(process.env.GMAIL_OAUTH_KEYS_JSON);
+        } else {
+            // Fallback to file-based approach
+            if (!process.env.GMAIL_OAUTH_PATH && !CREDENTIALS_PATH && !fs.existsSync(CONFIG_DIR)) {
+                fs.mkdirSync(CONFIG_DIR, { recursive: true });
+            }
+
+            const localOAuthPath = path.join(process.cwd(), 'gcp-oauth.keys.json');
+            let oauthPath = OAUTH_PATH;
+
+            if (fs.existsSync(localOAuthPath)) {
+                fs.copyFileSync(localOAuthPath, OAUTH_PATH);
+                console.log('OAuth keys found in current directory, copied to global config.');
+            }
+
+            if (!fs.existsSync(OAUTH_PATH)) {
+                console.error('Error: OAuth keys file not found. Please place gcp-oauth.keys.json in current directory or', CONFIG_DIR);
+                console.error('Alternatively, set GMAIL_OAUTH_KEYS_JSON environment variable with the JSON content.');
+                process.exit(1);
+            }
+
+            keysContent = JSON.parse(fs.readFileSync(OAUTH_PATH, 'utf8'));
         }
 
-        const localOAuthPath = path.join(process.cwd(), 'gcp-oauth.keys.json');
-        let oauthPath = OAUTH_PATH;
-
-        if (fs.existsSync(localOAuthPath)) {
-            fs.copyFileSync(localOAuthPath, OAUTH_PATH);
-            console.log('OAuth keys found in current directory, copied to global config.');
-        }
-
-        if (!fs.existsSync(OAUTH_PATH)) {
-            console.error('Error: OAuth keys file not found. Please place gcp-oauth.keys.json in current directory or', CONFIG_DIR);
-            process.exit(1);
-        }
-
-        const keysContent = JSON.parse(fs.readFileSync(OAUTH_PATH, 'utf8'));
         const keys = keysContent.installed || keysContent.web;
 
         if (!keys) {
@@ -122,8 +157,14 @@ async function loadCredentials() {
             callback
         );
 
-        if (fs.existsSync(CREDENTIALS_PATH)) {
-            const credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));
+        // Try to load credentials from environment variable (Doppler) or file
+        if (process.env.GMAIL_CREDENTIALS_JSON) {
+            // Doppler provides JSON as string
+            credentials = JSON.parse(process.env.GMAIL_CREDENTIALS_JSON);
+            oauth2Client.setCredentials(credentials);
+        } else if (fs.existsSync(CREDENTIALS_PATH)) {
+            // Fallback to file-based approach
+            credentials = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));
             oauth2Client.setCredentials(credentials);
         }
     } catch (error) {
@@ -319,6 +360,7 @@ const SearchJobsSchema = z.object({
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 async function main() {
+    loadLinkedInEnvFile();
     await loadCredentials();
 
     if (process.argv[2] === 'auth') {

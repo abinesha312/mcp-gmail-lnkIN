@@ -53,34 +53,50 @@ Run authentication:
 npm run auth
 ```
 
-### LinkedIn Setup
+### LinkedIn (no OAuth – use a local env file)
 
-Set the following environment variables:
-- `LINKEDIN_EMAIL` - Your LinkedIn email address
-- `LINKEDIN_PASSWORD` - Your LinkedIn password
+LinkedIn tools use the same config directory as Gmail. **Do not put your LinkedIn password in the MCP config or in the shell.** Use a local env file instead:
+
+1. Create the config directory if needed: `mkdir -p ~/.gmail-mcp` (or `%USERPROFILE%\.gmail-mcp` on Windows).
+2. Create a file named **`linkedin.env`** inside it with:
+   ```
+   LINKEDIN_EMAIL=your_email@example.com
+   LINKEDIN_PASSWORD=your_password
+   ```
+3. The server will load these when it starts. You can run the server **without** setting `LINKEDIN_EMAIL` or `LINKEDIN_PASSWORD` in your MCP config or in the shell.
+
+Optional: set `LINKEDIN_ENV_FILE` to the full path of a different env file, or set `MCP_GMAIL_LINKEDIN_CONFIG_DIR` to a different config directory (default is `~/.gmail-mcp`).
+
+**Why not OAuth?** LinkedIn’s official OAuth does not expose the same feed and job-search APIs this server uses. The current implementation relies on the unofficial API with email/password; the env file keeps credentials off the command line and out of your MCP JSON.
+
+**I use “Sign in with Google” on LinkedIn.** That is only for the LinkedIn website. This server cannot use that flow; it needs a **LinkedIn account email + LinkedIn account password** (the same you’d use if you chose “Sign in with email” on linkedin.com). If you only ever use “Sign in with Google”, you likely never set a LinkedIn password. To use the LinkedIn tools here: go to [LinkedIn → Account → Sign in & security](https://www.linkedin.com/mypreferences/d/security) and **add or change your LinkedIn password**. Then in `linkedin.env` use your LinkedIn email (often your Gmail address) and that **LinkedIn password** — not your Google password.
 
 ## Configuration
 
-Add to your MCP client configuration (e.g., Claude Desktop):
+Add to your MCP client configuration (e.g., Claude Desktop or Cursor). **You do not need to pass LinkedIn credentials here** if you use `linkedin.env`:
 
 ```json
 {
   "mcpServers": {
     "gmail-linkedin": {
       "command": "node",
-      "args": ["path/to/mcp_gmail_linkedin/dist/index.js"],
-      "env": {
-        "LINKEDIN_EMAIL": "your_linkedin_email",
-        "LINKEDIN_PASSWORD": "your_linkedin_password"
-      }
+      "args": ["path/to/mcp_gmail_linkedin/dist/index.js"]
     }
   }
 }
 ```
 
-You can also set Gmail OAuth paths via environment variables:
-- `GMAIL_OAUTH_PATH` - Path to `gcp-oauth.keys.json`
-- `GMAIL_CREDENTIALS_PATH` - Path to stored credentials
+Optional environment variables:
+- `GMAIL_OAUTH_PATH` - Path to `gcp-oauth.keys.json` (fallback if `GMAIL_OAUTH_KEYS_JSON` not set)
+- `GMAIL_OAUTH_KEYS_JSON` - Complete OAuth keys JSON as string (Doppler-friendly)
+- `GMAIL_CREDENTIALS_PATH` - Path to stored Gmail credentials (fallback if `GMAIL_CREDENTIALS_JSON` not set)
+- `GMAIL_CREDENTIALS_JSON` - Complete OAuth credentials JSON as string (Doppler-friendly)
+- `MCP_GMAIL_LINKEDIN_CONFIG_DIR` - Config directory (default: `~/.gmail-mcp`)
+- `LINKEDIN_ENV_FILE` - Path to LinkedIn env file (default: `{configDir}/linkedin.env`)
+- `LINKEDIN_EMAIL` - LinkedIn email (can be set via env or Doppler)
+- `LINKEDIN_PASSWORD` - LinkedIn password (can be set via env or Doppler)
+
+**Note:** The application prioritizes JSON environment variables (Doppler) over file paths. If `GMAIL_OAUTH_KEYS_JSON` is set, it will be used instead of reading from `GMAIL_OAUTH_PATH`.
 
 ## Sample Usage
 

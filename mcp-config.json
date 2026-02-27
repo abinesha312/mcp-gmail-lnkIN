@@ -2,11 +2,7 @@
   "mcpServers": {
     "gmail-linkedin": {
       "command": "node",
-      "args": ["dist/index.js"],
-      "env": {
-        "LINKEDIN_EMAIL": "",
-        "LINKEDIN_PASSWORD": ""
-      }
+      "args": ["dist/index.js"]
     }
   }
 }

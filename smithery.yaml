@@ -4,31 +4,69 @@ startCommand:
   type: stdio
   configSchema:
     type: object
-    required:
-      - gcpOauthKeysPath
-      - credentialsPath
+    required: []
     properties:
+      # Doppler configuration (recommended)
+      dopplerProject:
+        type: string
+        description: Doppler project name (e.g., "mcp-gmail-linkedin")
+      dopplerConfig:
+        type: string
+        description: Doppler config/environment (e.g., "dev", "prod"). Defaults to "dev"
+      dopplerToken:
+        type: string
+        description: Doppler service token (optional if using doppler CLI auth)
+      
+      # File-based configuration (fallback, for non-Doppler setups)
       gcpOauthKeysPath:
         type: string
-        description: Path to the GCP OAuth keys JSON file (Gmail)
+        description: Path to the GCP OAuth keys JSON file (Gmail) - only if not using Doppler
       credentialsPath:
         type: string
-        description: Path to the stored Gmail OAuth credentials JSON file
+        description: Path to the stored Gmail OAuth credentials JSON file - only if not using Doppler
       linkedinEmail:
         type: string
-        description: LinkedIn account email (optional, for getFeedPosts and searchJobs)
+        description: LinkedIn account email (optional, can be in Doppler or env file)
       linkedinPassword:
         type: string
-        description: LinkedIn account password (optional)
+        description: LinkedIn account password (optional, can be in Doppler or env file)
   commandFunction:
     |-
-    (config) => ({
-      command: 'node',
-      args: ['dist/index.js'],
-      env: {
-        GMAIL_OAUTH_PATH: config.gcpOauthKeysPath,
-        GMAIL_CREDENTIALS_PATH: config.credentialsPath,
-        ...(config.linkedinEmail && { LINKEDIN_EMAIL: config.linkedinEmail }),
-        ...(config.linkedinPassword && { LINKEDIN_PASSWORD: config.linkedinPassword })
+    (config) => {
+      // If Doppler is configured, use doppler run wrapper
+      if (config.dopplerProject) {
+        const dopplerConfig = config.dopplerConfig || 'dev';
+        const dopplerArgs = ['run', '--config', dopplerConfig];
+        
+        // If service token provided, use it
+        if (config.dopplerToken) {
+          dopplerArgs.push('--token', config.dopplerToken);
+        } else {
+          // Otherwise use doppler project flag (requires doppler CLI auth)
+          dopplerArgs.push('--project', config.dopplerProject);
+        }
+        
+        dopplerArgs.push('--', 'node', 'dist/index.js');
+        
+        return {
+          command: 'doppler',
+          args: dopplerArgs,
+          env: {
+            // Doppler will inject all secrets as env vars
+            // No need to set them here
+          }
+        };
       }
-    })
+      
+      // Fallback to file-based configuration
+      return {
+        command: 'node',
+        args: ['dist/index.js'],
+        env: {
+          ...(config.gcpOauthKeysPath && { GMAIL_OAUTH_PATH: config.gcpOauthKeysPath }),
+          ...(config.credentialsPath && { GMAIL_CREDENTIALS_PATH: config.credentialsPath }),
+          ...(config.linkedinEmail && { LINKEDIN_EMAIL: config.linkedinEmail }),
+          ...(config.linkedinPassword && { LINKEDIN_PASSWORD: config.linkedinPassword })
+        }
+      };
+    }

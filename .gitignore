@@ -27,5 +27,6 @@ Thumbs.db
 # Credentials and secrets (do not commit)
 gcp-oauth.keys.json
 credentials.json
+linkedin.env
 .gmail-mcp/
 *.pem
