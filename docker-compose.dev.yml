@@ -1,0 +1,38 @@
+# Development Docker Compose
+# Run with: docker-compose -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-unified-api-dev
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - API_PORT=3001
+      - MCP_DATA_DIR=/app/data
+    volumes:
+      # Mount source for hot reload
+      - ./src:/app/src
+      - ./data:/app/data
+      - /app/node_modules
+    command: npm run dev:api
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: mcp-unified-dashboard-dev
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    volumes:
+      # Mount dashboard for hot reload (if using dev server)
+      - ./dashboard:/app/dashboard
+    restart: unless-stopped

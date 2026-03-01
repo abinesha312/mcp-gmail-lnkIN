@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-unified-api
+    ports:
+      - "${API_PORT:-3001}:3001"
+    environment:
+      - NODE_ENV=production
+      - API_PORT=3001
+      - MCP_DATA_DIR=/app/data
+      - MASTER_SECRET=${MASTER_SECRET:-}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:5173,http://localhost:80,http://localhost:3000}
+      - RATE_LIMIT_GENERAL=${RATE_LIMIT_GENERAL:-100}
+      - RATE_LIMIT_TOOLS=${RATE_LIMIT_TOOLS:-30}
+      - RATE_LIMIT_OAUTH=${RATE_LIMIT_OAUTH:-10}
+    volumes:
+      # Persist credentials database
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/api/services"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: mcp-unified-dashboard
+    ports:
+      - "${DASHBOARD_PORT:-5173}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  data:
+    driver: local

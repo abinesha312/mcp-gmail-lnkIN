@@ -1,0 +1,67 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation (keep README)
+*.md
+!README.md
+
+# Test files
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+
+# Data directory (will be mounted as volume)
+data/
+
+# Logs
+logs/
+*.log
+
+# Docker files (don't copy into image)
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+docker/
+
+# Terminal outputs
+terminals/
+*.txt
+
+# Cursor specific
+.cursor/
+agent-transcripts/
+mcps/
+
+# Temporary files
+tmp/
+temp/
+*.tmp

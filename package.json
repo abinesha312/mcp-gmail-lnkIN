@@ -1,0 +1,57 @@
+{
+  "name": "mcp-unified",
+  "version": "2.0.0",
+  "description": "Unified MCP Server — Gmail, Drive, Calendar, YouTube, Notion, Telegram, WhatsApp, LinkedIn",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-unified": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/api.ts --format esm --dts --clean",
+    "dev:mcp": "tsx src/index.ts",
+    "dev:api": "nodemon",
+    "dev:dashboard": "vite dashboard",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:dashboard\"",
+    "start": "node dist/index.js",
+    "start:api": "node dist/api.js",
+    "auth:google": "tsx src/auth/googleAuth.ts",
+    "auth:outlook": "tsx src/auth/outlookAuth.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@notionhq/client": "^2.2.15",
+    "axios": "^1.7.2",
+    "better-sqlite3": "^9.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.1.5",
+    "googleapis": "^144.0.0",
+    "linkedin-api-client": "^0.3.0",
+    "linkedin-private-api": "^1.1.2",
+    "node-telegram-bot-api": "^0.66.0",
+    "nodemailer": "^6.9.13",
+    "open": "^10.1.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.10",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "@types/node-telegram-bot-api": "^0.64.7",
+    "@types/nodemailer": "^6.4.15",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.14",
+    "tsup": "^8.1.0",
+    "tsx": "^4.15.6",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.1"
+  }
+}
